@@ -1,10 +1,10 @@
 // GET /api/market/[id]?force=1 -> fetch/refresh the latest market snapshot
 //   for a company (id accepts DB id or symbol). Returns the snapshot plus
-//   an illustrative price series for the chart (clearly labelled as
-//   illustrative when no real OHLC feed is configured).
+//   a REAL price-history series built from past snapshots (each refresh
+//   appends a row, so the chart grows real data over time — no synthetic data).
 import { asyncHandler, jsonOk, ApiError } from "@/lib/api-response";
 import { db } from "@/lib/db";
-import { getSnapshot, illustrativeSeries } from "@/lib/market-data";
+import { getSnapshot, getSnapshotHistory } from "@/lib/market-data";
 
 export const GET = asyncHandler(
   async (req: Request, ctx: { params: Promise<{ id: string }> }) => {
@@ -18,7 +18,7 @@ export const GET = asyncHandler(
     if (!company) throw ApiError.notFound("Company not found");
 
     const snapshot = await getSnapshot(company.id, { force });
-    const series = illustrativeSeries(snapshot.price);
+    const history = await getSnapshotHistory(company.id);
 
     return jsonOk({
       company: { id: company.id, symbol: company.symbol, name: company.name },
@@ -36,7 +36,7 @@ export const GET = asyncHandler(
         fetchedAt: snapshot.fetchedAt,
         stale: snapshot.stale ?? false,
       },
-      series, // illustrative price series — UI labels it clearly
+      history, // real snapshot-price history (grows as you refresh)
     });
   }
 );

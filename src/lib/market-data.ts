@@ -254,23 +254,19 @@ export async function getSnapshot(
   }
 }
 
-// Simple synthetic 90-day price series derived from the snapshot price,
-// used ONLY to render an illustrative chart when no real historical OHLC
-// feed is available. Clearly labelled as "illustrative" in the UI.
-export function illustrativeSeries(price: number | null | undefined, days = 90) {
-  if (!price || price <= 0) return [];
-  const out: { date: string; close: number; synthetic: true }[] = [];
-  const today = new Date();
-  let p = price * 0.9; // start ~10% below current
-  for (let i = days; i >= 0; i--) {
-    // tiny deterministic random-walk so the chart looks plausible
-    const seed = Math.sin(i * 12.9898) * 43758.5453;
-    const r = (seed - Math.floor(seed) - 0.5) * 0.03;
-    p = Math.max(0.01, p * (1 + r));
-    if (i === 0) p = price;
-    const d = new Date(today);
-    d.setDate(d.getDate() - i);
-    out.push({ date: d.toISOString().slice(0, 10), close: +p.toFixed(2), synthetic: true });
-  }
-  return out;
+// Real price history built from the append-only StockSnapshot table.
+// Every refresh creates a new snapshot row, so the chart grows real data
+// points as the user uses the app — NO synthetic/illustrative series.
+// Returns points oldest-first. Only includes snapshots that have a price.
+export async function getSnapshotHistory(companyId: string, limit = 30) {
+  const rows = await db.stockSnapshot.findMany({
+    where: { companyId, price: { not: null } },
+    orderBy: { fetchedAt: "asc" },
+    take: limit,
+    select: { fetchedAt: true, price: true },
+  });
+  return rows.map((r) => ({
+    date: r.fetchedAt.toISOString(),
+    close: r.price as number,
+  }));
 }

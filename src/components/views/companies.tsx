@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, ArrowLeft, RefreshCw, Loader2, Building2, Star, GitCompare } from "lucide-react";
+import { Search, ArrowLeft, RefreshCw, Loader2, Building2, Star, GitCompare, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Area, AreaChart } from "recharts";
 
@@ -139,7 +139,7 @@ function CompanyList({ go }: { go: (n: NavState) => void }) {
 function CompanyDetail({ go, companyId, symbol }: { go: (n: NavState) => void; companyId: string; symbol?: string }) {
   const [company, setCompany] = useState<Company | null>(null);
   const [snap, setSnap] = useState<Snapshot | null>(null);
-  const [series, setSeries] = useState<{ date: string; close: number }[]>([]);
+  const [history, setHistory] = useState<{ date: string; close: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -149,11 +149,10 @@ function CompanyDetail({ go, companyId, symbol }: { go: (n: NavState) => void; c
       const detail = await api.get<{ company: Company; snapshot: Snapshot | null }>(`/api/companies/${encodeURIComponent(companyId)}`);
       setCompany(detail.company);
       setSnap(detail.snapshot);
-      // fetch series for chart
-      const m = await api.get<{ series: { date: string; close: number }[] }>(`/api/market/${encodeURIComponent(companyId)}${force ? "?force=1" : ""}`);
-      setCompany(m.company ? detail.company : detail.company);
+      // fetch real snapshot-price history for the chart (grows as you refresh)
+      const m = await api.get<{ history: { date: string; close: number }[] }>(`/api/market/${encodeURIComponent(companyId)}${force ? "?force=1" : ""}`);
       setSnap(m.snapshot ?? detail.snapshot);
-      setSeries(m.series ?? []);
+      setHistory(m.history ?? []);
     } catch (err) {
       toast.error((err as Error).message);
     } finally {
@@ -166,9 +165,9 @@ function CompanyDetail({ go, companyId, symbol }: { go: (n: NavState) => void; c
   const refresh = async () => {
     setRefreshing(true);
     try {
-      const m = await api.get<{ snapshot: Snapshot; series: { date: string; close: number }[]; company: { symbol: string; name: string } }>(`/api/market/${encodeURIComponent(companyId)}?force=1`);
+      const m = await api.get<{ snapshot: Snapshot; history: { date: string; close: number }[]; company: { symbol: string; name: string } }>(`/api/market/${encodeURIComponent(companyId)}?force=1`);
       setSnap(m.snapshot);
-      setSeries(m.series ?? []);
+      setHistory(m.history ?? []);
       toast.success("Market data refreshed");
     } catch (err) {
       toast.error((err as Error).message);
@@ -222,10 +221,10 @@ function CompanyDetail({ go, companyId, symbol }: { go: (n: NavState) => void; c
             </div>
           </CardHeader>
           <CardContent>
-            {series.length > 0 ? (
+            {history.length >= 2 ? (
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={series} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
+                  <AreaChart data={history} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
                     <defs>
                       <linearGradient id="px" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="#10b981" stopOpacity={0.35} />
@@ -233,22 +232,28 @@ function CompanyDetail({ go, companyId, symbol }: { go: (n: NavState) => void; c
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} />
-                    <XAxis dataKey="date" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} minTickGap={30} />
-                    <YAxis tick={{ fontSize: 10 }} tickLine={false} axisLine={false} domain={["auto", "auto"]} width={40} tickFormatter={(v) => fmtPrice(v as number, inr ? "INR" : "USD")} />
+                    <XAxis dataKey="date" tickFormatter={(d: string) => new Date(d).toLocaleDateString()} tick={{ fontSize: 10 }} tickLine={false} axisLine={false} minTickGap={30} />
+                    <YAxis tick={{ fontSize: 10 }} tickLine={false} axisLine={false} domain={["auto", "auto"]} width={48} tickFormatter={(v) => fmtPrice(v as number, inr ? "INR" : "USD")} />
                     <Tooltip
+                      labelFormatter={(d: string) => new Date(d).toLocaleString()}
                       contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", fontSize: 12 }}
-                      formatter={(v: number) => [fmtPrice(v, inr ? "INR" : "USD"), "Close"]}
+                      formatter={(v: number) => [fmtPrice(v, inr ? "INR" : "USD"), "Price"]}
                     />
                     <Area type="monotone" dataKey="close" stroke="#10b981" strokeWidth={2} fill="url(#px)" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
             ) : (
-              <div className="h-64 grid place-items-center text-sm text-muted-foreground">No price series available.</div>
+              <div className="h-64 grid place-items-center text-center px-6">
+                <div className="space-y-1.5">
+                  <TrendingUp className="h-6 w-6 mx-auto text-muted-foreground/60" />
+                  <p className="text-sm text-muted-foreground">Price history builds as you refresh.</p>
+                  <p className="text-xs text-muted-foreground/80">Each refresh appends a real data point. Click <span className="font-medium text-foreground">Refresh</span> a few times to grow the chart.</p>
+                </div>
+              </div>
             )}
             <p className="text-[10px] text-muted-foreground mt-2">
-              {snap ? `Source: ${snap.source} · fetched ${timeAgo(snap.fetchedAt)}` : "No snapshot yet."}
-              {series.length > 0 && " · Chart series is illustrative (derived from the latest price) when no OHLC feed is configured."}
+              {snap ? `Source: ${snap.source} · fetched ${timeAgo(snap.fetchedAt)}${history.length >= 2 ? ` · ${history.length} real data points` : ""}` : "No snapshot yet."}
             </p>
           </CardContent>
         </Card>

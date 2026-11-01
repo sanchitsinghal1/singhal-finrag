@@ -6,19 +6,20 @@ import { useAuth } from "@/context/auth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { LayoutDashboard, Building2, FileText, MessagesSquare, Star, GitCompare, LogOut, TrendingUp, User as UserIcon } from "lucide-react";
+import { LayoutDashboard, Building2, FileText, MessagesSquare, Star, GitCompare, LogOut, TrendingUp } from "lucide-react";
 import { DashboardView } from "@/components/views/dashboard";
 import { CompaniesView } from "@/components/views/companies";
 import { DocumentsView } from "@/components/views/documents";
 import { ResearchView } from "@/components/views/research";
 import { WatchlistsView } from "@/components/views/watchlists";
 import { AnalysisView } from "@/components/views/analysis";
+import { BrandWordmark, BrandLogo } from "@/components/brand/brand";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 type View = "dashboard" | "companies" | "documents" | "research" | "watchlists" | "analysis";
 
 interface NavState {
   view: View;
-  // optional context payloads for detail screens
   companyId?: string;
   companySymbol?: string;
   documentId?: string;
@@ -53,10 +54,7 @@ export function AppShell() {
         <div className="mx-auto w-full max-w-7xl px-4">
           <div className="flex h-14 items-center justify-between gap-4">
             <button onClick={() => selectTab("dashboard")} className="flex items-center gap-2 shrink-0">
-              <div className="h-8 w-8 rounded-lg bg-emerald-600 text-white grid place-items-center shadow-sm">
-                <TrendingUp className="h-4 w-4" />
-              </div>
-              <span className="font-semibold tracking-tight hidden sm:inline">Stock Intelligence</span>
+              <BrandWordmark size="sm" />
             </button>
 
             {/* Tab nav */}
@@ -71,7 +69,7 @@ export function AppShell() {
                         onClick={() => selectTab(n.id)}
                         className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors whitespace-nowrap ${
                           active
-                            ? "bg-emerald-600 text-white shadow-sm"
+                            ? "bg-gradient-to-r from-sky-600 to-emerald-600 text-white shadow-sm"
                             : "text-muted-foreground hover:text-foreground hover:bg-muted"
                         }`}
                         aria-current={active ? "page" : undefined}
@@ -85,32 +83,35 @@ export function AppShell() {
               </ul>
             </nav>
 
-            {/* User menu */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 rounded-full hover:bg-muted p-0.5 pr-2 transition-colors">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback className="bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200 text-xs font-semibold">
-                      {initials}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm hidden md:inline max-w-[140px] truncate">{user?.name || user?.email}</span>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-0.5">
-                    <p className="text-sm font-medium">{user?.name || "User"}</p>
-                    <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => logout()} className="text-red-600 focus:text-red-700">
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Sign out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* User menu + theme */}
+            <div className="flex items-center gap-1">
+              <ThemeToggle />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-2 rounded-full hover:bg-muted p-0.5 pr-2 transition-colors">
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback className="bg-gradient-to-br from-sky-500 to-emerald-600 text-white text-xs font-semibold">
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm hidden md:inline max-w-[140px] truncate">{user?.name || user?.email}</span>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-0.5">
+                      <p className="text-sm font-medium">{user?.name || "User"}</p>
+                      <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => logout()} className="text-red-600 focus:text-red-700">
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sign out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
       </header>
@@ -125,12 +126,12 @@ export function AppShell() {
         {nav.view === "analysis" && <AnalysisView go={go} />}
       </main>
 
-      {/* Sticky footer */}
-      <footer className="border-t bg-background/80 mt-auto">
+      {/* Sticky footer with personal branding */}
+      <footer className="border-t bg-muted/20 mt-auto">
         <div className="mx-auto w-full max-w-7xl px-4 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
           <p className="flex items-center gap-1.5">
-            <TrendingUp className="h-3.5 w-3.5 text-emerald-600" />
-            Stock Intelligence RAG · Evidence-grounded research
+            <BrandLogo size="sm" className="h-4 w-4" />
+            Singhal FinRAG · crafted by <span className="font-medium text-foreground">Sanchit Singhal</span>
           </p>
           <p>Market data is web-sourced &amp; may be delayed. Not investment advice.</p>
         </div>

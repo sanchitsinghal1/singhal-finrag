@@ -5,6 +5,7 @@ import { api } from "@/lib/api-client";
 import type { CompanyListEntry, DocumentItem, ConversationItem, Snapshot } from "@/lib/types";
 import { fmtPrice, fmtPct, fmtCompact, timeAgo, fmtBytes } from "@/lib/format";
 import type { NavState, View } from "@/components/app/app-shell";
+import { useAuth } from "@/context/auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +17,7 @@ interface Props {
 }
 
 export function DashboardView({ go }: Props) {
+  const { user } = useAuth();
   const [companies, setCompanies] = useState<CompanyListEntry[]>([]);
   const [docs, setDocs] = useState<DocumentItem[]>([]);
   const [convs, setConvs] = useState<ConversationItem[]>([]);
@@ -46,10 +48,12 @@ export function DashboardView({ go }: Props) {
   return (
     <div className="space-y-6">
       {/* Hero */}
-      <section className="rounded-xl border bg-gradient-to-br from-emerald-600/10 via-background to-background p-5 sm:p-6">
+      <section className="rounded-xl border bg-gradient-to-br from-sky-600/10 via-emerald-600/5 to-background p-5 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Research Workspace</h1>
+            <h1 className="text-2xl font-bold tracking-tight">
+              {user?.name ? `Welcome back, ${user.name.split(" ")[0]}` : "Research Workspace"}
+            </h1>
             <p className="text-sm text-muted-foreground mt-1 max-w-xl">
               Upload financial reports, ask evidence-grounded questions, and compare companies using real retrieved context — not invented answers.
             </p>

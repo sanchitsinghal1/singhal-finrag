@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
+import { ThemeProvider } from "@/components/theme/theme-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,24 +16,31 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Z.ai Code Scaffold - AI-Powered Development",
-  description: "Modern Next.js scaffold optimized for AI-powered development with Z.ai. Built with TypeScript, Tailwind CSS, and shadcn/ui.",
-  keywords: ["Z.ai", "Next.js", "TypeScript", "Tailwind CSS", "shadcn/ui", "AI development", "React"],
-  authors: [{ name: "Z.ai Team" }],
+  title: "Singhal FinRAG — Evidence-grounded equity research",
+  description:
+    "Singhal FinRAG is a multi-user research workspace that ingests your financial reports and answers your questions with cited, grounded answers — never invented figures. Crafted by Sanchit Singhal.",
+  keywords: [
+    "Singhal FinRAG", "RAG", "retrieval-augmented generation", "equity research",
+    "financial research", "AI finance", "document Q&A", "Sanchit Singhal",
+  ],
+  authors: [{ name: "Sanchit Singhal" }],
+  creator: "Sanchit Singhal",
   icons: {
-    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/logo/og-512.png",
   },
   openGraph: {
-    title: "Z.ai Code Scaffold",
-    description: "AI-powered development with modern React stack",
-    url: "https://chat.z.ai",
-    siteName: "Z.ai",
+    title: "Singhal FinRAG — Evidence-grounded equity research",
+    description: "Upload reports, ask questions, get cited answers grounded in your documents.",
+    images: ["/logo/og-512.png"],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Z.ai Code Scaffold",
-    description: "AI-powered development with modern React stack",
+    title: "Singhal FinRAG",
+    description: "Evidence-grounded equity research. Crafted by Sanchit Singhal.",
+    images: ["/logo/og-512.png"],
   },
 };
 
@@ -46,9 +54,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >
-        {children}
-        <Toaster />
-        <Sonner position="top-right" richColors closeButton />
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          {children}
+          <Toaster />
+          <Sonner position="top-right" richColors closeButton />
+        </ThemeProvider>
       </body>
     </html>
   );

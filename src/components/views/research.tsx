@@ -303,10 +303,10 @@ function ConversationList({ conversations, activeId, loading, onSelect, onDelete
 
 function EmptyChat({ onPick }: { onPick: (q: string) => void }) {
   const suggestions = [
-    "Summarise this company's key risks from the uploaded report.",
-    "What does the latest annual report say about revenue growth?",
-    "Compare the company's margin trend across the last two reporting periods.",
-    "List the main business segments and their contributions.",
+    "Sanchit, what are the key risks mentioned in this annual report?",
+    "What does the report say about revenue and margin growth?",
+    "Compare the margin trend across the last two reporting periods.",
+    "List the main business segments and their revenue contributions.",
   ];
   return (
     <div className="h-full grid place-items-center text-center">
