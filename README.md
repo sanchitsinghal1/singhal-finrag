@@ -1,89 +1,131 @@
-# Stock Intelligence RAG
+# Singhal FinRAG
 
 An **evidence-grounded equity research workspace** with a complete
 Retrieval-Augmented Generation (RAG) pipeline. Upload financial reports,
 ask questions, and get answers that cite the exact text they used — never
-invented figures.
+invented figures. Crafted by **Sanchit Singhal**.
 
-> This repository runs in a Next.js 16 + TypeScript + Prisma/SQLite
-> sandbox. The original brief specified MERN + MongoDB; the architecture
-> here is a faithful adaptation that preserves every core capability
-> (real RAG, real PDF extraction, real LLM grounding, real market data)
-> while fitting the available stack. See `docs/RAG_GUIDE_HI_EN.md` for
-> the documented migration path back to MongoDB Atlas Vector Search.
+> **Stack:** JavaScript (no TypeScript) · MongoDB (no SQLite) · separate
+> Express backend + Next.js frontend. The RAG pipeline, TF-IDF embeddings,
+> cosine retrieval, citation mapping, market-data fault tolerance, Recharts
+> visualisations, and Singhal FinRAG branding are all preserved from the
+> original implementation — only the database, language, and folder
+> structure changed.
 
-## What it does
+## Architecture
 
-- **Dashboard** — market overview, recent documents & research.
-- **Companies** — searchable directory of 20 seeded tickers (US + India),
-  per-company intelligence with price chart, fundamentals, and refreshable
-  web-sourced snapshots.
-- **Documents** — upload PDF / TXT / MD; the app extracts, chunks (size +
-  overlap), embeds, and indexes for retrieval, with duplicate detection
-  and per-user ownership.
-- **Research** — multi-turn RAG chat. Answers are grounded in retrieved
-  chunks, carry `evidenceType` provenance, and link to clickable citations.
-  If evidence is insufficient, the assistant says so — it never
-  fabricates.
-- **Watchlists** — create lists, track companies, attach notes and price
-  targets.
-- **Analysis** — compare up to 5 companies side-by-side and generate
-  grounded Bull/Bear, SWOT, and equity-summary briefs with evidence tags.
+```
+Singhal-FinRAG/
+├── frontend/                 # Next.js 16 (App Router) — UI only, port 3000
+│   ├── src/
+│   │   ├── app/              # pages (layout, page, globals.css)
+│   │   ├── components/       # views, brand, landing, theme, ui (shadcn)
+│   │   ├── context/          # auth context
+│   │   ├── hooks/            # use-toast, use-mobile
+│   │   └── lib/              # api-client, format, types, utils
+│   ├── public/               # logo, favicon
+│   ├── next.config.js        # proxies /api/* → backend
+│   ├── tailwind.config.js
+│   └── package.json
+├── backend/                  # Express + Mongoose — API + DB, port 3001
+│   ├── src/
+│   │   ├── config/db.js      # MongoDB connection (Mongoose)
+│   │   ├── models/           # 11 Mongoose schemas
+│   │   ├── services/         # embedding, rag, market-data, ingest, zai
+│   │   ├── middleware/       # auth (bcrypt + JWT cookie)
+│   │   ├── routes/           # auth, companies, market, documents, rag,
+│   │   │                     #   conversations, watchlists, research-notes, analysis
+│   │   ├── utils/            # ApiError, asyncHandler, jsonOk
+│   │   └── server.js         # Express entry
+│   └── package.json
+├── docs/                     # architecture, API, setup, RAG guide, resume, migration
+├── .env.example
+└── package.json              # orchestrates both via `concurrently`
+```
 
-## Tech stack
-
-- **Next.js 16** (App Router) + **TypeScript** + **Tailwind CSS 4** + **shadcn/ui**
-- **Prisma** ORM + **SQLite** (migration path to MongoDB Atlas in the docs)
-- **bcrypt** + **JWT** in httpOnly cookies for auth
-- **z-ai-web-dev-sdk** for the LLM (`chat.completions`) and web search
-  (`functions.invoke('web_search')`) — backend only
-- **pdf-parse** for PDF text extraction
-- A custom, dependency-free **TF-IDF vectorizer + cosine similarity** for
-  embeddings and retrieval
-- **Recharts** for charts
+**Data flow:** Browser → Next.js (:3000) → rewrite proxy `/api/*` → Express (:3001) → MongoDB.
+The proxy keeps the browser same-origin so httpOnly cookies work with `SameSite=Lax`.
 
 ## Quick start
 
+### 1. Start MongoDB
+
+Local MongoDB (download the community binary for your OS):
 ```bash
-bun install
-bun run db:push     # create the SQLite schema
-bun run db:generate
-bun run dev         # http://localhost:3000
+mongod --dbpath ./data --port 27017 --bind_ip 127.0.0.1
+```
+Or use MongoDB Atlas (cloud) and copy the `mongodb+srv://...` connection string.
+
+### 2. Configure environment
+
+```bash
+cp .env.example .env                 # root (optional — used by the orchestrator)
+cp backend/.env.example backend/.env # edit MONGODB_URI + JWT_SECRET
+cp frontend/.env.example frontend/.env
 ```
 
-Open the app, register an account, upload a `.txt` financial report, and
-ask it a question in the Research tab.
+Set in `backend/.env`:
+- `MONGODB_URI` — your MongoDB connection string
+- `JWT_SECRET` — `openssl rand -hex 32`
+- `PORT` — `3001` (the frontend proxies here)
 
-## Configuration
+### 3. Install + run
 
-`.env` (only two variables needed in this sandbox):
+```bash
+# install both
+cd backend  && bun install && cd ..
+cd frontend && bun install && cd ..
 
-```env
-DATABASE_URL=file:./db/custom.db
-JWT_SECRET=replace-with-a-long-random-string   # required for production
+# run both together (backend on 3001, frontend on 3000)
+bun run dev
 ```
 
-No LLM / embedding / market-data API keys are required — they're accessed
-through the bundled SDK.
+Open **http://localhost:3000** — you'll see the Singhal FinRAG landing page.
+
+To run them separately:
+```bash
+bun run dev:backend    # Express on :3001
+bun run dev:frontend   # Next.js on :3000
+```
+
+## MongoDB Atlas setup
+
+1. Create a free cluster at https://www.mongodb.com/atlas.
+2. Database Access → add a user; Network Access → allow your IP.
+3. Connect → Drivers → copy the connection string:
+   `mongodb+srv://<user>:<password>@<cluster>.mongodb.net/?retryWrites=true&w=majority`
+4. Paste into `backend/.env` as `MONGODB_URI`, and set `MONGODB_DB_NAME=singhal_finrag`.
+5. Restart the backend. The company directory is auto-seeded on first run.
+
+## What works (verified)
+
+- Register / login / logout (bcrypt + JWT httpOnly cookie, proxied)
+- Document upload (PDF/TXT/MD) → extract → chunk → TF-IDF embed → MongoDB
+- RAG query → grounded answer with `[Doc n]` citations + `evidenceType` provenance
+- Insufficient-evidence refusal ("I don't have enough information…")
+- Multi-tenant ownership: User B cannot retrieve User A's document chunks
+  (enforced at the MongoDB query layer — `ownerId` filter before retrieval)
+- Market snapshots via web search, 3-query fallback, stale-cache badge
+- Company detail with real price-history chart (grows as you refresh)
+- Watchlists, research notes, analysis (compare + Bull/Bear/SWOT briefs)
+- Dark/light theme, fully responsive (mobile/tablet/desktop)
+- Singhal FinRAG branding + "Crafted by Sanchit Singhal" throughout
 
 ## Documentation
 
-- [`docs/SETUP.md`](docs/SETUP.md) — local setup & verification
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — layering, data model, security
-- [`docs/RAG_GUIDE_HI_EN.md`](docs/RAG_GUIDE_HI_EN.md) — Hinglish RAG tutorial (the pipeline, step by step)
-- [`docs/API_DOCUMENTATION.md`](docs/API_DOCUMENTATION.md) — every endpoint
-- [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — Vercel / self-host + MongoDB Atlas Vector Search migration
-- [`docs/RESUME_PROJECT.md`](docs/RESUME_PROJECT.md) — interview talking points
+- `docs/SETUP.md` — detailed local setup
+- `docs/ARCHITECTURE.md` — layering, data model, security
+- `docs/RAG_GUIDE_HI_EN.md` — Hinglish RAG pipeline tutorial
+- `docs/API_DOCUMENTATION.md` — every endpoint
+- `docs/DEPLOYMENT.md` — Vercel / self-host + Atlas
+- `docs/MIGRATION_REPORT.md` — SQLite→MongoDB + TS→JS migration record
+- `docs/RESUME_ACHIEVEMENTS.md` — interview talking points
 
 ## Honesty notes
 
-- Market data is **web-sourced** (via `web_search`), not real-time tick
-  data. Every snapshot stores its `source` and `fetchedAt`; stale snapshots
-  are served with a visible badge.
-- Embeddings are **TF-IDF sparse vectors** (local, zero-dependency). The
-  upgrade path to dense transformer / API embeddings and MongoDB Atlas
-  Vector Search is documented in the RAG guide.
-- **PDF OCR is not enabled.** Scanned image-only PDFs report "No
-  extractable text found" honestly rather than pretending to read them.
-- This is a portfolio project, not a production trading platform. Do not
-  use it for actual investment decisions.
+- Market data is **web-sourced** (delayed, not real-time tick). Every snapshot
+  stores its `source` + `fetchedAt`; stale snapshots show a visible badge.
+- Embeddings are **TF-IDF sparse vectors** (local, dependency-free). The data
+  model is shaped to swap in dense/Atlas Vector Search — see the RAG guide.
+- PDF OCR is not enabled; scanned PDFs report "No extractable text" honestly.
+- This is a portfolio project, not a production trading platform.
