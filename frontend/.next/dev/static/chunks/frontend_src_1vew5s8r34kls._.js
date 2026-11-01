@@ -6,6 +6,22 @@ __turbopack_context__.s([
     "default",
     ()=>Page
 ]);
+// ============================================================================
+// Root Page — the single entry point (the only route users see is "/")
+// ============================================================================
+// This component decides what the visitor sees, based on auth state:
+//
+//   loading?          -> spinner (session is being restored from the cookie)
+//   not logged in?    -> LandingPage (marketing) OR AuthView (login/register)
+//   logged in?        -> AppShell (the workspace: dashboard, research, etc.)
+//
+// WHY ONE ROUTE:
+//   The sandbox exposes only "/" to the browser. So instead of Next.js route
+//   segments (/dashboard, /login, ...), we switch views with React state.
+//   `guestView` toggles between the landing page and the auth form for
+//   unauthenticated visitors. Once logged in, AppShell takes over and
+//   manages its own tab state internally.
+// ============================================================================
 var __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/frontend/node_modules/next/dist/compiled/react/jsx-dev-runtime.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/frontend/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$src$2f$context$2f$auth$2e$jsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/frontend/src/context/auth.jsx [app-client] (ecmascript)");
@@ -27,8 +43,9 @@ var _s = __turbopack_context__.k.signature();
 function Root() {
     _s();
     const { user, loading } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$src$2f$context$2f$auth$2e$jsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useAuth"])();
+    // For unauthenticated visitors: "landing" (marketing page) or "auth" (form)
     const [guestView, setGuestView] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])("landing");
-    const [authMode, setAuthMode] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])("login");
+    const [authMode, setAuthMode] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])("login"); // "login" | "register"
     if (loading) {
         return (0, __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
             className: "min-h-screen grid place-items-center bg-background",
@@ -6263,6 +6280,23 @@ __turbopack_context__.s([
     "useAuth",
     ()=>useAuth
 ]);
+// ============================================================================
+// Auth Context — global state for the logged-in user
+// ============================================================================
+// This wraps the whole app (see app/page.jsx) so any component can read the
+// current user via `const { user } = useAuth()` without prop-drilling.
+//
+// WHAT IT DOES:
+//   - On mount: calls GET /api/auth/me to restore the session from the
+//     httpOnly cookie (so a page refresh keeps you logged in).
+//   - login(email, password) / register(...) -> POST to the backend, which
+//     sets the cookie; then we update local state.
+//   - logout() -> POST /api/auth/logout, which clears the cookie.
+//
+// The cookie is httpOnly so JavaScript can't read it directly — we only know
+// who the user is by asking the backend (/api/auth/me). That's why this
+// context exists: to cache that answer so we don't ask on every render.
+// ============================================================================
 var __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/frontend/node_modules/next/dist/compiled/react/jsx-dev-runtime.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/frontend/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$src$2f$lib$2f$api$2d$client$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/frontend/src/lib/api-client.js [app-client] (ecmascript)");
@@ -6279,6 +6313,7 @@ function AuthProvider({ children }) {
         loading: true,
         error: null
     });
+    // Re-fetch the current user from the backend (used after login/register/logout).
     const refresh = (0, __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
         "AuthProvider.useCallback[refresh]": async ()=>{
             try {
@@ -6393,12 +6428,28 @@ if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelper
 "[project]/frontend/src/lib/api-client.js [app-client] (ecmascript)", ((__turbopack_context__) => {
 "use strict";
 
-// =====================================================================
-// Client-side API helper. Wraps fetch, attaches credentials, parses the
-// standard { success, data, message } envelope, and throws an Error with
-// the server's message on failure so callers can use try/catch + toasts.
-// (JavaScript port — types stripped, runtime behaviour identical.)
-// =====================================================================
+// ============================================================================
+// API Client — how the frontend talks to the backend
+// ============================================================================
+// Every frontend component that needs data calls these helpers instead of
+// using fetch() directly. This centralises:
+//
+//   1. credentials: "include"  -> sends the httpOnly session cookie with every
+//      request (required for auth — without it, the backend can't identify you)
+//   2. The standard response envelope  -> { success, data, message }
+//   3. Error handling  -> throws a typed ApiError so callers can toast it
+//
+// USAGE:
+//   import { api } from "@/lib/api-client";
+//   const user = await api.get("/api/auth/me");      // GET
+//   await api.post("/api/rag/query", { question });   // POST with JSON body
+//   await api.del("/api/documents/123");               // DELETE
+//   await uploadFile("/api/documents", formData);      // multipart file upload
+//
+// All URLs are RELATIVE (start with /api/...). Next.js proxies them to the
+// backend via next.config.js rewrites — the frontend never knows the backend
+// port. This is what keeps the cookie same-origin.
+// ============================================================================
 __turbopack_context__.s([
     "ApiError",
     ()=>ApiError,
@@ -6410,10 +6461,11 @@ __turbopack_context__.s([
 class ApiError extends Error {
     constructor(status, message, details){
         super(message);
-        this.status = status;
-        this.details = details;
+        this.status = status; // HTTP status code (400, 401, 404, 500, ...)
+        this.details = details; // optional extra info from the server
     }
 }
+// Core request function used by api.get / post / patch / del.
 async function request(method, url, body, init) {
     const res = await fetch(url, {
         method,
@@ -6427,18 +6479,22 @@ async function request(method, url, body, init) {
         body: body ? JSON.stringify(body) : undefined,
         ...init
     });
-    // Special case: multipart upload already has its own body.
+    // Some responses (e.g. a failed non-JSON upstream) won't have a JSON body.
     const ct = res.headers.get("content-type") ?? "";
     if (!ct.includes("application/json")) {
         if (!res.ok) throw new ApiError(res.status, `Request failed (${res.status})`);
         return {};
     }
+    // Parse the standard envelope.
     const json = await res.json();
     if (!res.ok || !json.success) {
+        // Server returned an error — throw with the server's message.
         throw new ApiError(res.status, json.message ?? `Request failed (${res.status})`, json.details);
     }
-    // Preserve `null` explicitly (e.g. /api/auth/me when not logged in).
-    // Only fall back to an empty object when `data` is literally absent.
+    // IMPORTANT: preserve `null` explicitly. /api/auth/me returns data: null
+    // when not logged in. If we defaulted null -> {}, an empty object would be
+    // truthy and the app would think an empty user is logged in. This was a
+    // real bug during development (see docs/MIGRATION_REPORT.md).
     return json.data === undefined ? {} : json.data;
 }
 const api = {

@@ -1,8 +1,30 @@
-// Embedding service — TF-IDF vectorizer + cosine similarity + chunking.
-// Ported verbatim from src/lib/embedding.ts (TypeScript -> JavaScript).
-// The algorithm is unchanged: tokenize (Unicode-aware, stopword-filtered),
-// build sparse TF vectors, compute smoothed IDF over the candidate corpus,
-// rank by cosine similarity. Sentence-boundary chunking with overlap.
+// ============================================================================
+// Embedding Service — TF-IDF vectorizer + cosine similarity + text chunking
+// ============================================================================
+// This is the "math" behind retrieval. It's a from-scratch, dependency-free
+// implementation (no LangChain, no OpenAI embeddings, no vector DB).
+//
+// WHAT IS AN EMBEDDING?
+//   An embedding turns text into a numeric vector so similar texts have
+//   similar vectors. We use TF-IDF: each dimension = a term, the value =
+//   how often that term appears in THIS chunk, weighted by how RARE it is
+//   across the whole corpus (IDF). Cosine similarity then measures how
+//   "aligned" two vectors are -> how related the texts are.
+//
+// FUNCTIONS:
+//   tokenize(text)      -> lowercase, split on word/number boundaries, drop stopwords
+//   buildTfVector(text) -> { term: count } sparse map + total token count
+//   computeIdf(chunks)  -> per-term inverse-document-frequency (rare terms score higher)
+//   cosineTfidf(q,c,idf)-> similarity score between a query and a chunk (0..1)
+//   chunkText(text,...) -> split a document into ~1200-char sentence-aware chunks
+//                          with 200-char overlap (so context isn't lost at boundaries)
+//
+// WHY TF-IDF (not dense transformer embeddings)?
+//   It runs 100% locally with zero external API/model download — perfect for a
+//   portfolio project that should work on any laptop. The data shape
+//   (chunk text + JSON embedding + metadata) is designed to swap in a dense
+//   model or MongoDB Atlas Vector Search by replacing only this file.
+// ============================================================================
 
 const STOPWORDS = new Set([
   "a","an","the","and","or","but","if","then","of","in","on","at","to","for",

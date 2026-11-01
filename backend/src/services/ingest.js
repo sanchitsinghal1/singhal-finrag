@@ -1,5 +1,30 @@
-// Document ingestion service — extract -> clean -> dedup -> chunk -> embed -> persist.
-// Ported from src/lib/ingest.ts. Prisma -> Mongoose. Same logic + guards.
+// ============================================================================
+// Document Ingestion Service — turns an uploaded file into searchable chunks
+// ============================================================================
+// When a user uploads a PDF/TXT/MD report, this is what happens to it:
+//
+//   1. VALIDATE      -> check size (<=10 MB) and file type (PDF/TXT/MD)
+//   2. CREATE RECORD -> a FinancialDocument row with status "processing"
+//                       (so the UI can show progress even before it's done)
+//   3. EXTRACT TEXT  -> PDF: pdf-parse pulls text + page count.
+//                       TXT/MD: read as UTF-8.
+//                       Scanned PDFs (image-only) yield no text -> we report
+//                       "No extractable text found" honestly (no OCR).
+//   4. CLEAN         -> normalise whitespace, strip form-feed chars from PDFs
+//   5. DEDUP         -> sha256 the cleaned text. If the user already has a
+//                       READY document with the same hash, reject as duplicate
+//                       (don't re-index — would pollute retrieval + skew IDF).
+//   6. CHUNK         -> split into ~1200-char chunks on sentence boundaries,
+//                       with 200-char overlap so a fact straddling a boundary
+//                       isn't lost (see embedding.js chunkText).
+//   7. EMBED         -> each chunk becomes a TF-IDF sparse vector (buildTfVector)
+//   8. PERSIST       -> store each chunk in DocumentChunk (text + embedding JSON)
+//   9. MARK READY    -> update the FinancialDocument status to "ready"
+//
+// On ANY error, the document is marked "failed" with an error message so the
+// user sees what went wrong in their library.
+// ============================================================================
+
 import { createHash } from "node:crypto";
 import path from "node:path";
 import { FinancialDocument } from "../models/FinancialDocument.js";

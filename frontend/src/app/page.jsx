@@ -1,4 +1,20 @@
 "use client";
+// ============================================================================
+// Root Page — the single entry point (the only route users see is "/")
+// ============================================================================
+// This component decides what the visitor sees, based on auth state:
+//
+//   loading?          -> spinner (session is being restored from the cookie)
+//   not logged in?    -> LandingPage (marketing) OR AuthView (login/register)
+//   logged in?        -> AppShell (the workspace: dashboard, research, etc.)
+//
+// WHY ONE ROUTE:
+//   The sandbox exposes only "/" to the browser. So instead of Next.js route
+//   segments (/dashboard, /login, ...), we switch views with React state.
+//   `guestView` toggles between the landing page and the auth form for
+//   unauthenticated visitors. Once logged in, AppShell takes over and
+//   manages its own tab state internally.
+// ============================================================================
 import { jsxDEV as jsxDEV_7x81h0kn } from "react/jsx-dev-runtime";
 import { useState } from "react";
 import { AuthProvider, useAuth } from "@/context/auth";
@@ -7,10 +23,13 @@ import { AppShell } from "@/components/app/app-shell";
 import { LandingPage } from "@/components/landing/landing-page";
 import { Loader2 } from "lucide-react";
 import { BrandLogo } from "@/components/brand/brand";
+
 function Root() {
   const { user, loading } = useAuth();
+  // For unauthenticated visitors: "landing" (marketing page) or "auth" (form)
   const [guestView, setGuestView] = useState("landing");
-  const [authMode, setAuthMode] = useState("login");
+  const [authMode, setAuthMode] = useState("login"); // "login" | "register"
+
   if (loading) {
     return jsxDEV_7x81h0kn("div", {
       className: "min-h-screen grid place-items-center bg-background",

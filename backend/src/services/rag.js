@@ -1,33 +1,68 @@
-// RAG service — the heart of the application.
-// Ported from src/lib/rag.ts. Prisma -> Mongoose. Same pipeline + grounding rules.
-// retrieve() enforces ownership at the query layer (FinancialDocument.ownerId
-// filter BEFORE any chunk reaches the LLM prompt).
+// ============================================================================
+// RAG Service — the heart of Singhal FinRAG
+// ============================================================================
+// This file implements the complete Retrieval-Augmented Generation pipeline.
+// When a user asks a question, here's exactly what happens:
+//
+//   1. RETRIEVE  — find the most relevant document chunks for the question
+//                  (TF-IDF cosine similarity over the user's OWN documents)
+//   2. PROMPT    — build a grounded system prompt with the retrieved chunks
+//                  + strict rules: "answer ONLY from this context, never invent"
+//   3. LLM CALL  — send the prompt + conversation history to the AI model
+//   4. CITE      — map the model's [Doc n] markers back to real source chunks
+//                  and return structured citations + an evidenceType flag
+//
+// CRITICAL SECURITY DETAIL:
+//   The retrieval candidate set is filtered by `document.ownerId` at the
+//   MongoDB query layer (see retrieve() below). This means the LLM physically
+//   CANNOT see another user's document chunks — they never reach the prompt.
+//   This is enforced at the data-access boundary, not in the prompt text.
+//
+// Files this depends on:
+//   - embedding.js   (TF-IDF vectorizer + cosine similarity + chunking)
+//   - ingest.js      (how chunks got into MongoDB in the first place)
+//   - zai.js         (the z-ai-web-dev-sdk singleton for the LLM call)
+// ============================================================================
+
 import { DocumentChunk } from "../models/DocumentChunk.js";
 import { FinancialDocument } from "../models/FinancialDocument.js";
 import { StockSnapshot } from "../models/StockSnapshot.js";
-import { Company } from "../models/Company.js";
 import { Message } from "../models/Message.js";
 import { buildTfVector, computeIdf, cosineTfidf, deserialize } from "./embedding.js";
 import { getZai } from "./zai.js";
 
+// ---------------------------------------------------------------------------
+// STEP 1: RETRIEVE — find the top-K most relevant chunks for a question.
+// ---------------------------------------------------------------------------
+// This is the "R" in RAG. We:
+//   a) Find the user's READY documents (ownership-scoped — the security boundary)
+//   b) Load all chunks belonging to those documents
+//   c) Build a TF-IDF vector for the question + each chunk
+//   d) Compute IDF over the candidate corpus (so rare terms score higher)
+//   e) Rank chunks by cosine similarity, keep the top 5
+//   f) Drop near-zero matches (they're noise, not real evidence)
 export async function retrieve(question, opts) {
   const topK = opts.topK ?? 5;
 
-  // Ownership-scoped candidate set: only the user's READY documents,
-  // optionally narrowed by company/document. This filter is the security
-  // boundary — the LLM cannot see chunks that don't pass it.
+  // (a) Ownership-scoped candidate documents.
+  // ONLY this user's READY documents are considered. Another user's docs
+  // are filtered out HERE — before any chunk reaches the LLM. This is the
+  // multi-tenant isolation boundary.
   const docFilter = {
     ownerId: opts.ownerId,
     status: "ready",
     ...(opts.documentId ? { _id: opts.documentId } : {}),
     ...(opts.companyId ? { companyId: opts.companyId } : {}),
   };
-  const docIds = (await FinancialDocument.find(docFilter).distinct("_id"));
+  const docIds = await FinancialDocument.find(docFilter).distinct("_id");
 
+  // If the user has no matching documents, there's nothing to retrieve.
+  // The LLM will be told "no documents retrieved" and will honestly refuse.
   if (docIds.length === 0) return [];
 
+  // (b) Load all chunks for those documents, populated with their parent doc.
   const chunks = await DocumentChunk.find({ documentId: { $in: docIds } })
-    .populate("documentId"); // field is `documentId`; populated doc lives on chunk.documentId
+    .populate("documentId"); // field is `documentId`; populated doc is on chunk.documentId
 
   const queryVec = buildTfVector(question);
   const chunkVecs = chunks.map((c) => deserialize(c.embedding));

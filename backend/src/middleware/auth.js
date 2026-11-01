@@ -1,6 +1,28 @@
-// Auth middleware — bcrypt password hashing + JWT in an httpOnly cookie.
-// Ported from src/lib/auth.ts. Uses cookie-parser (Express) instead of
-// next/headers cookies(). Same security properties: HttpOnly + SameSite=Lax.
+// ============================================================================
+// Auth Middleware — bcrypt password hashing + JWT in an httpOnly cookie
+// ============================================================================
+// This module handles authentication for the Express backend. The flow:
+//
+//   REGISTER  -> hash password with bcrypt (cost 10) -> store User in MongoDB
+//                -> sign a JWT -> set it in an httpOnly cookie -> user is in
+//   LOGIN     -> find user by email -> bcrypt.compare the password
+//                -> if OK, sign JWT + set cookie; if not, 401
+//   ME        -> read the cookie -> verify the JWT -> load the User from MongoDB
+//   LOGOUT    -> clear the cookie
+//
+// SECURITY DETAILS (the parts that aren't boilerplate):
+//   - The cookie is HttpOnly (JavaScript can't read it -> XSS can't steal it)
+//     and SameSite=Lax (blocks most CSRF).
+//   - On login, even if the email doesn't exist we STILL run a bcrypt compare
+//     against a dummy hash, so the response timing doesn't leak which emails
+//     are registered (a timing-attack mitigation).
+//   - requireUser is Express middleware: it throws 401 if there's no valid
+//     session, and attaches the loaded user to req.user for the route handler.
+//
+// The frontend never sees the JWT directly — it just sends the cookie
+// (credentials: "include" in api-client.js) and the backend reads it here.
+// ============================================================================
+
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { User } from "../models/User.js";

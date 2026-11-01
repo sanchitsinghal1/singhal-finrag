@@ -1,5 +1,32 @@
-// RAG query route — the core endpoint.
-// Body: { question, conversationId?, companyId?, documentId? }
+// ============================================================================
+// RAG Query Route — POST /api/rag/query  (THE core endpoint of the app)
+// ============================================================================
+// This is what the Research tab calls when the user asks a question.
+//
+// REQUEST BODY:
+//   {
+//     question: "What was Apple's net income in 2023?",   // required
+//     conversationId: "abc...",                           // optional — if set,
+//                                                          //   history is loaded
+//                                                          //   and the Q+A are
+//                                                          //   persisted as messages
+//     companyId: "xyz...",                                // optional — narrows
+//                                                          //   retrieval + grounds
+//                                                          //   on the market snapshot
+//     documentId: "def..."                                // optional — narrow to
+//                                                          //   one document
+//   }
+//
+// FLOW:
+//   1. requireUser middleware -> req.user (throws 401 if not logged in)
+//   2. If conversationId given, verify it belongs to the user + load history
+//   3. Call rag.answer() -> retrieve chunks -> build grounded prompt -> LLM
+//   4. If conversationId given, persist the user question + assistant answer
+//      (with the citations JSON + evidenceType) as two Message rows
+//   5. Return { answer, citations, evidenceType, retrievedCount, topScore }
+//
+// The citations array is what the frontend renders as clickable source cards.
+// ============================================================================
 import { Router } from "express";
 import { Conversation } from "../models/Conversation.js";
 import { Message } from "../models/Message.js";
