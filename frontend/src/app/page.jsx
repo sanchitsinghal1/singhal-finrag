@@ -15,7 +15,7 @@
 //   unauthenticated visitors. Once logged in, AppShell takes over and
 //   manages its own tab state internally.
 // ============================================================================
-import { jsxDEV as jsxDEV_7x81h0kn } from "react/jsx-dev-runtime";
+import { jsx as jsxDEV_7x81h0kn } from "react/jsx-runtime";
 import { useState } from "react";
 import { AuthProvider, useAuth } from "@/context/auth";
 import { AuthView } from "@/components/auth/auth-gate";

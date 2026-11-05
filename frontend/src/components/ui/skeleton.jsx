@@ -1,4 +1,4 @@
-import { jsxDEV as jsxDEV_7x81h0kn } from "react/jsx-dev-runtime";
+import { jsx as jsxDEV_7x81h0kn } from "react/jsx-runtime";
 import { cn } from "@/lib/utils";
 function Skeleton({ className, ...props }) {
   return jsxDEV_7x81h0kn("div", {

@@ -1,4 +1,4 @@
-import { jsxDEV as jsxDEV_7x81h0kn } from "react/jsx-dev-runtime";
+import { jsx as jsxDEV_7x81h0kn } from "react/jsx-runtime";
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva } from "class-variance-authority";

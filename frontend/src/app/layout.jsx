@@ -1,6 +1,5 @@
-import { jsxDEV as jsxDEV_7x81h0kn } from "react/jsx-dev-runtime";
 import { Geist, Geist_Mono } from "next/font/google";
-import"./globals.css";
+import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme/theme-provider";
@@ -48,26 +47,20 @@ export const metadata = {
 export default function RootLayout({
   children
 }) {
-  return jsxDEV_7x81h0kn("html", {
-    lang: "en",
-    suppressHydrationWarning: true,
-    children: jsxDEV_7x81h0kn("body", {
-      className: `${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`,
-      children: jsxDEV_7x81h0kn(ThemeProvider, {
-        attribute: "class",
-        defaultTheme: "system",
-        enableSystem: true,
-        disableTransitionOnChange: true,
-        children: [
-          children,
-          jsxDEV_7x81h0kn(Toaster, {}, undefined, false, undefined, this),
-          jsxDEV_7x81h0kn(Sonner, {
-            position: "top-right",
-            richColors: true,
-            closeButton: true
-          }, undefined, false, undefined, this)
-        ]
-      }, undefined, true, undefined, this)
-    }, undefined, false, undefined, this)
-  }, undefined, false, undefined, this);
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+          <Toaster />
+          <Sonner position="top-right" richColors closeButton />
+        </ThemeProvider>
+      </body>
+    </html>
+  );
 }

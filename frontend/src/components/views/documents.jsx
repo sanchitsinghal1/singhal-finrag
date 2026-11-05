@@ -1,5 +1,5 @@
 "use client";
-import { jsxDEV as jsxDEV_7x81h0kn } from "react/jsx-dev-runtime";
+import { jsx as jsxDEV_7x81h0kn } from "react/jsx-runtime";
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { api, uploadFile } from "@/lib/api-client";
 import { fmtBytes, fmtCompact, timeAgo } from "@/lib/format";

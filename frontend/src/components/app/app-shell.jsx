@@ -1,5 +1,5 @@
 "use client";
-import { jsxDEV as jsxDEV_7x81h0kn } from "react/jsx-dev-runtime";
+import { jsx as jsxDEV_7x81h0kn } from "react/jsx-runtime";
 import React, { useState, useCallback } from "react";
 import { useAuth } from "@/context/auth";
 import { Button } from "@/components/ui/button";

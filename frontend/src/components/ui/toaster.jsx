@@ -1,5 +1,5 @@
 "use client";
-import { jsxDEV as jsxDEV_7x81h0kn } from "react/jsx-dev-runtime";
+import { jsx as jsxDEV_7x81h0kn } from "react/jsx-runtime";
 import { useToast } from "@/hooks/use-toast";
 import {
   Toast,

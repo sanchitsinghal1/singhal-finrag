@@ -16,7 +16,7 @@
 // who the user is by asking the backend (/api/auth/me). That's why this
 // context exists: to cache that answer so we don't ask on every render.
 // ============================================================================
-import { jsxDEV as jsxDEV_7x81h0kn } from "react/jsx-dev-runtime";
+import { jsx as jsxDEV_7x81h0kn } from "react/jsx-runtime";
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { api } from "@/lib/api-client";
 
