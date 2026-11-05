@@ -1,0 +1,31 @@
+1:"$Sreact.fragment"
+2:"/_next/static/chunks/17_8zs6ziss1d.js"
+3:"/_next/static/chunks/0if5c8kj3n-81.js"
+4:I[84864,["$2","$3"],"ThemeProvider"]
+5:I[32035,["$2","$3"],"default"]
+6:I[91168,["$2","$3"],"default"]
+7:I[20767,["$2","$3"],"Toaster"]
+8:I[89400,["$2","$3"],"Toaster"]
+f:I[64381,["$2","$3"],"OutletBoundary"]
+10:"$Sreact.suspense"
+13:"ViewportBoundary"
+14:I[64381,["$2","$3"],"$13"]
+15:"MetadataBoundary"
+16:I[64381,["$2","$3"],"$15"]
+17:I[12843,["$2","$3"],"IconMark"]
+:HL["/_next/static/chunks/1emr0dqdtcyzv.css","style"]
+a:X
+d:X
+d:C
+e:[["children",{"s":"__PAGE__","h":160,"d":{"r":["$","$1","c",{"children":[[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":"$0:t:t:d:r:props:children:1:props:children:props:children:props:children:0:props:notFound:0:1:props:style","children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":"$0:t:t:d:r:props:children:1:props:children:props:children:props:children:0:props:notFound:0:1:props:children:props:children:1:props:style","children":404}],["$","div",null,{"style":"$0:t:t:d:r:props:children:1:props:children:props:children:props:children:0:props:notFound:0:1:props:children:props:children:2:props:style","children":["$","h2",null,{"style":"$0:t:t:d:r:props:children:1:props:children:props:children:props:children:0:props:notFound:0:1:props:children:props:children:2:props:children:props:style","children":"This page could not be found."}]}]]}]}]],null,["$","$Lf",null,{"children":["$","$10",null,{"name":"Next.MetadataOutlet","children":"$@11"}]}]]}],"p":"$@12","v":null,"s":"$a"}}]]
+b:[["children",{"s":"/_not-found","h":96,"d":{"r":["$","$1","c",{"children":[null,["$","$L5",null,{"parallelRouterKey":"children","template":["$","$L6",null,{}]}]]}],"p":"$@c","v":"$d","s":"$a"},"c":"$Qe"}]]
+0:{"t":{"t":{"s":"","h":80,"d":{"r":["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/_next/static/chunks/1emr0dqdtcyzv.css","precedence":"next"}],["$","script","script-0",{"src":"/_next/static/chunks/17_8zs6ziss1d.js","async":true}],["$","script","script-1",{"src":"/_next/static/chunks/0if5c8kj3n-81.js","async":true}]],["$","html",null,{"lang":"en","suppressHydrationWarning":true,"children":["$","body",null,{"className":"MPP-3a_variable UNk6MG_variable antialiased bg-background text-foreground","children":["$","$L4",null,{"attribute":"class","defaultTheme":"system","enableSystem":true,"disableTransitionOnChange":true,"children":[["$","$L5",null,{"parallelRouterKey":"children","template":["$","$L6",null,{}],"notFound":[[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]],[]]}],["$","$L7",null,{}],["$","$L8",null,{"position":"top-right","richColors":true,"closeButton":true}]]}]}]}]]}],"p":"$@9","v":null,"s":"$a"},"c":"$Qb"},"h":{"r":["$","$1","h",{"children":[["$","meta",null,{"name":"robots","content":"noindex"}],["$","$L14",null,{"children":[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]}],["$","$L16",null,{"children":[["$","div",null,{"hidden":true,"children":["$","$10",null,{"name":"Next.Metadata","children":[["$","title","0",{"children":"Singhal FinRAG — Evidence-grounded equity research"}],["$","meta","1",{"name":"description","content":"Singhal FinRAG is a multi-user research workspace that ingests your financial reports and answers your questions with cited, grounded answers — never invented figures. Crafted by Sanchit Singhal."}],["$","meta","2",{"name":"author","content":"Sanchit Singhal"}],["$","meta","3",{"name":"keywords","content":"Singhal FinRAG,RAG,retrieval-augmented generation,equity research,financial research,AI finance,document Q&A,Sanchit Singhal"}],["$","meta","4",{"name":"creator","content":"Sanchit Singhal"}],["$","meta","5",{"property":"og:title","content":"Singhal FinRAG — Evidence-grounded equity research"}],["$","meta","6",{"property":"og:description","content":"Upload reports, ask questions, get cited answers grounded in your documents."}],["$","meta","7",{"property":"og:image","content":"http://localhost:3000/logo/og-512.png"}],["$","meta","8",{"property":"og:type","content":"website"}],["$","meta","9",{"name":"twitter:card","content":"summary_large_image"}],["$","meta","10",{"name":"twitter:title","content":"Singhal FinRAG"}],["$","meta","11",{"name":"twitter:description","content":"Evidence-grounded equity research. Crafted by Sanchit Singhal."}],["$","meta","12",{"name":"twitter:image","content":"http://localhost:3000/logo/og-512.png"}],["$","link","13",{"rel":"shortcut icon","href":"/favicon.png"}],["$","link","14",{"rel":"icon","href":"/favicon.png"}],["$","link","15",{"rel":"apple-touch-icon","href":"/logo/og-512.png"}],["$","$L17","16",{}]]}]}],null]}],["$","meta",null,{"name":"next-size-adjust","content":""}]]}],"p":"$@18","v":null,"s":"$a"}},"a":"$@19","u":"$@1a","b":"R42wf1hbzXluD78M4thTJ"}
+11:null
+a:300
+1a:true
+a:C
+19:0
+c:"$undefined"
+9:"$undefined"
+18:"$undefined"
+12:"$undefined"
