@@ -1,0 +1,244 @@
+// =====================================================================
+// Stock Intelligence RAG — Prisma schema (SQLite)
+// ---------------------------------------------------------------------
+// NOTE on embeddings & "vector search":
+//   This project runs on SQLite (the only DB available in this sandbox).
+//   We store each chunk's TF-IDF embedding as a JSON string in
+//   `DocumentChunk.embedding` and perform cosine-similarity retrieval in
+//   application code (see src/lib/embedding.service.ts + rag.service.ts).
+//   The data model is intentionally compatible with migrating to MongoDB
+//   Atlas Vector Search later (the chunk text + vector + metadata shape
+//   matches what a `vectorSearch` index expects). See docs/RAG_GUIDE.
+// =====================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------
+// Users & auth
+// ---------------------------------------------------------------------
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String
+  role         String   @default("user") // "user" | "admin"
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  documents      FinancialDocument[]
+  conversations  Conversation[]
+  watchlists     Watchlist[]
+  researchNotes  ResearchNote[]
+}
+
+// ---------------------------------------------------------------------
+// Companies & market data (sourced from a market-data provider via
+// web search; cached with a TTL — see StockSnapshot.fetchedAt)
+// ---------------------------------------------------------------------
+model Company {
+  id          String   @id @default(cuid())
+  symbol      String   @unique // e.g. AAPL, MSFT, RELIANCE.NS
+  name        String
+  exchange    String?  // NASDAQ, NYSE, NSE, etc.
+  sector      String?
+  industry    String?
+  description String?
+  logoUrl     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  snapshots       StockSnapshot[]
+  historicalPrices HistoricalPrice[]
+  documents       FinancialDocument[]
+  conversations   Conversation[]
+  watchlistItems  WatchlistItem[]
+  researchNotes   ResearchNote[]
+}
+
+// Latest cached market-data snapshot for a company. `rawJson` keeps the
+// full provider payload so we can show source/period transparently.
+model StockSnapshot {
+  id            String   @id @default(cuid())
+  companyId     String
+  source        String   // "web_search" | provider name
+  price         Float?
+  change        Float?
+  changePercent Float?
+  currency      String?
+  marketCap     Float?
+  peRatio       Float?
+  eps           Float?
+  revenue       Float?
+  profitMargin  Float?
+  week52High    Float?
+  week52Low     Float?
+  volume        Float?
+  dividendYield Float?
+  summary       String?  // short human-readable snapshot
+  rawJson       String   // full provider payload (JSON string)
+  fetchedAt     DateTime @default(now())
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+}
+
+// OHLC history for charting (period = 1D|1W|1M|3M|1Y|MAX).
+model HistoricalPrice {
+  id        String   @id @default(cuid())
+  companyId String
+  date      DateTime
+  open      Float?
+  high      Float?
+  low       Float?
+  close     Float?
+  volume    Float?
+  period    String   // the range this row was fetched for
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, date])
+}
+
+// ---------------------------------------------------------------------
+// Document ingestion & RAG storage
+// ---------------------------------------------------------------------
+model FinancialDocument {
+  id           String   @id @default(cuid())
+  ownerId      String
+  companyId    String?
+  originalName String
+  mimeType     String
+  size         Int
+  // Status machine: pending -> processing -> ready | failed
+  status       String   @default("pending")
+  textHash     String?  // sha256 of extracted text -> duplicate detection
+  totalPages   Int?
+  chunkCount   Int      @default(0)
+  charCount    Int      @default(0)
+  errorMessage String?
+  uploadedAt   DateTime @default(now())
+  processedAt  DateTime?
+
+  owner        User            @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  company      Company?        @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  chunks       DocumentChunk[]
+  conversations Conversation[]
+
+  @@index([ownerId])
+  @@index([companyId])
+  @@index([status])
+}
+
+// A chunk of a document plus its TF-IDF embedding (JSON number[]).
+// `chunkIndex` keeps order; `page` (when available) supports citations.
+model DocumentChunk {
+  id          String   @id @default(cuid())
+  documentId  String
+  chunkIndex  Int
+  text        String
+  charCount   Int
+  tokenCount  Int      // approximate token count (words)
+  page        Int?
+  // TF-IDF sparse embedding stored as JSON: { termHash: weight, ... }
+  // We keep it as a string because SQLite has no array/vector type.
+  embedding   String
+  createdAt   DateTime @default(now())
+
+  document FinancialDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+}
+
+// ---------------------------------------------------------------------
+// Research chat (RAG Q&A)
+// ---------------------------------------------------------------------
+model Conversation {
+  id          String   @id @default(cuid())
+  ownerId     String
+  title       String   @default("New conversation")
+  companyId   String?
+  documentId  String?  // optional: pin conversation to one document
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner    User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  company  Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  document FinancialDocument? @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  messages Message[]
+
+  @@index([ownerId])
+  @@index([companyId])
+}
+
+model Message {
+  id            String   @id @default(cuid())
+  conversationId String
+  role          String   // "user" | "assistant"
+  content       String
+  // JSON array of citations: [{ documentId, documentName, chunkIndex, page, snippet }]
+  citations     String?
+  // "documents" | "market_data" | "both" | "none" — provenance flag
+  evidenceType  String   @default("none")
+  createdAt     DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+}
+
+// ---------------------------------------------------------------------
+// Watchlists & saved research
+// ---------------------------------------------------------------------
+model Watchlist {
+  id          String   @id @default(cuid())
+  ownerId     String
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner User            @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  items WatchlistItem[]
+
+  @@index([ownerId])
+}
+
+model WatchlistItem {
+  id          String   @id @default(cuid())
+  watchlistId String
+  companyId   String
+  note        String?
+  targetPrice Float?   // optional simple alert threshold
+  addedAt     DateTime @default(now())
+
+  watchlist Watchlist @relation(fields: [watchlistId], references: [id], onDelete: Cascade)
+  company   Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([watchlistId, companyId])
+  @@index([watchlistId])
+}
+
+model ResearchNote {
+  id        String   @id @default(cuid())
+  ownerId   String
+  companyId String?
+  title     String
+  content   String
+  tags      String?  // comma-separated
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner   User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  company Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+
+  @@index([ownerId])
+  @@index([companyId])
+}
